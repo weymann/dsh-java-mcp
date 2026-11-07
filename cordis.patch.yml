@@ -1,0 +1,31 @@
+# dsh-java-mcp — bundle patch layer.
+#
+# A package that declares `dsh.bundle.patch` (see package.json) is pulled into
+# the profile's ordered bundle stack when it is installed into a profile; DSH
+# then applies this patch list automatically. No manual profile editing and no
+# import of this package as a Cordis plugin row is involved.
+#
+# The row inserts the official MCP client bridge, which spawns javalens-mcp
+# over stdio. Tool names become mcp__javalens__<tool>.
+- insert:
+    - id: mcp-javalens
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: javalens
+        transport: stdio
+        # `npx` is portable: the MCP SDK spawns with cross-spawn, which resolves
+        # npx.cmd through PATHEXT on Windows and npx on POSIX.
+        command: npx
+        args: ['-y', 'javalens-mcp@1.5.3']
+        env:
+          # `!!js` is DSH's entry-list YAML dialect: evaluated once at boot.
+          # The Desktop app boots the harness with cwd = opened workspace, so
+          # this defaults to the project root the session works in. Set
+          # JAVA_PROJECT_PATH to override explicitly (e.g. multi-repo folder).
+          JAVA_PROJECT_PATH: !!js process.env.JAVA_PROJECT_PATH || process.cwd()
+        # JavaLens answers only after its JDT project load; large multi-module
+        # builds can exceed the 60 s default of the MCP client.
+        toolCallTimeoutMs: 120000
+        # Keep DSH usable when Java 21+ or npx is missing: the tools then stay
+        # absent and an error is logged instead of aborting startup.
+        failOnStartupError: false

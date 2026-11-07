@@ -1,0 +1,6 @@
+node_modules/
+.pnpm-store/
+.tmp/
+*.log
+.DS_Store
+Thumbs.db

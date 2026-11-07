@@ -1,0 +1,3 @@
+# Keep repository files LF-normalised so the bundle behaves identically on
+# Windows, macOS and Linux checkouts.
+* text=auto eol=lf
