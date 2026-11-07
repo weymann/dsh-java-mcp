@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "JavaLens MCP",
+    "description": "通过 JavaLens MCP 服务器（Eclipse JDT）进行编译器级 Java 分析：75 个工具，覆盖导航、诊断、重构、影响与数据流分析。"
+  }
+}

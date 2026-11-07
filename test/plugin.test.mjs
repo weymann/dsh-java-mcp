@@ -41,10 +41,23 @@ test('display metadata files are valid', () => {
   const icon = read('icon.svg')
   assert.match(icon, /^<svg[\s>]/)
   assert.match(icon, /aria-label="JavaLens MCP"/)
-  const locale = JSON.parse(read('locale/en.json'))
-  assert.equal(typeof locale.meta?.title, 'string')
-  assert.equal(typeof locale.meta?.description, 'string')
-  assert.ok(locale.meta.title.length > 0 && locale.meta.description.length > 0)
+  for (const language of ['en', 'zh']) {
+    const locale = JSON.parse(read(`locale/${language}.json`))
+    assert.equal(typeof locale.meta?.title, 'string')
+    assert.equal(typeof locale.meta?.description, 'string')
+    assert.ok(locale.meta.title.length > 0 && locale.meta.description.length > 0)
+  }
+})
+
+test('Chinese documentation is shipped and cross-linked', () => {
+  assert.ok(manifest.files.includes('README.zh.md'))
+  const chinese = read('README.zh.md')
+  assert.match(chinese, /^# dsh-java-mcp/m)
+  assert.match(chinese, /\[English\]\(README\.md\)/)
+  assert.match(readme, /\[中文\]\(README\.zh\.md\)/)
+  assert.match(chinese, /github:weymann\/dsh-java-mcp/)
+  assert.match(chinese, /mcp__javalens__load_project/)
+  assert.match(chinese, /75/)
 })
 
 test('index.js is an importable ESM no-op', async () => {
@@ -114,7 +127,7 @@ test('documentation explains recognition and display metadata', () => {
   assert.match(readme, /no git-tag convention/i)
   assert.match(readme, /dsh\.bundle\.patch/)
   assert.match(readme, /icon\.svg/)
-  assert.match(readme, /locale\/en\.json/)
+  assert.match(readme, /locale\/<lang>\.json/)
 })
 
 test('decision records cover the bundle approach and the workspace correction', () => {
@@ -129,4 +142,7 @@ test('decision records cover the bundle approach and the workspace correction', 
   const metadata = read('docs/decisions/0003-plugin-metadata.md')
   assert.match(metadata, /^# 0003/m)
   assert.match(metadata, /git tags/i)
+  const chinese = read('docs/decisions/0004-chinese-docs.md')
+  assert.match(chinese, /^# 0004/m)
+  assert.match(chinese, /README\.zh\.md/)
 })

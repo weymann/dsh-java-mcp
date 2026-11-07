@@ -1,5 +1,7 @@
 # dsh-java-mcp
 
+English | [中文](README.zh.md)
+
 A DeepSeek Harness **bundle** that wires the [JavaLens](https://github.com/pzalutski-pixel/javalens-mcp)
 MCP server into DSH automatically. JavaLens is built on Eclipse JDT; after
 installation its tools are available to the model as native DSH tools under the
@@ -257,8 +259,10 @@ Optional display metadata (what the Plugins page shows):
 
 - `icon.svg` at the package root (or an explicit `"icon"` field) is used as the
   plugin icon.
-- `locale/en.json` with `{"meta": {"title", "description"}}` replaces the package
-  name and the `package.json` description in the Plugins list.
+- `locale/<lang>.json` (currently `en` and `zh`) with
+  `{"meta": {"title", "description"}}` replaces the package name and the
+  `package.json` description in the Plugins list, following the client
+  language.
 
 Discovery outside DSH (not required for recognition):
 
@@ -311,7 +315,8 @@ package.json          bundle manifest (dsh.bundle.patch, peer on dsh-mcp-client)
 cordis.patch.yml      patch layer: inserts the mcp-client row
 index.js              empty ESM module (bundle convention)
 icon.svg              plugin icon shown in the Plugins page
-locale/en.json        display title and description for the Plugins page
+locale/               display title and description for the Plugins page (en, zh)
+README.zh.md          Chinese user documentation
 test/plugin.test.mjs  smoke tests for manifest, patch and docs
 docs/javalens-tools-1.5.3.txt  canonical JavaLens 1.5.3 tool surface
 docs/decisions/       decision records
