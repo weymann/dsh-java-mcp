@@ -4,6 +4,7 @@
   "description": "DeepSeek Harness bundle that wires the JavaLens MCP server (Eclipse JDT semantic Java analysis) into DSH so the model can navigate, analyse and refactor Java code with compiler accuracy.",
   "keywords": [
     "dsh",
+    "dsh-plugin",
     "deepseek",
     "deepseek-harness",
     "cordis",
@@ -27,9 +28,12 @@
   "homepage": "https://github.com/weymann/dsh-java-mcp#readme",
   "type": "module",
   "main": "index.js",
+  "icon": "./icon.svg",
   "files": [
     "index.js",
     "cordis.patch.yml",
+    "icon.svg",
+    "locale/*.json",
     "README.md",
     "LICENSE"
   ],

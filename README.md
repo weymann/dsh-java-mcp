@@ -242,6 +242,40 @@ This plugin is a pure configuration bundle: `index.js` is an empty ESM module
 official MCP client does the work. There is no network access beyond the
 initial `npx` download; project code and analysis results stay local.
 
+## How DSH recognises and displays the plugin
+
+DSH has **no git-tag convention** for plugins. Recognition happens entirely
+through `package.json`:
+
+- `"dsh": { "bundle": { "patch": "./cordis.patch.yml" } }` marks the package as a
+  profile bundle. A package without a `dsh` field is installed as a plain
+  dependency and never mounted as a layer.
+- `peerDependencies` on `@deepseek-ai/dsh-*` are checked against the running
+  harness version before the bundle loads.
+
+Optional display metadata (what the Plugins page shows):
+
+- `icon.svg` at the package root (or an explicit `"icon"` field) is used as the
+  plugin icon.
+- `locale/en.json` with `{"meta": {"title", "description"}}` replaces the package
+  name and the `package.json` description in the Plugins list.
+
+Discovery outside DSH (not required for recognition):
+
+- npm `keywords` such as `dsh`, `dsh-plugin`, `deepseek-harness` and a GitHub
+  topic `dsh-plugin` help people find the repository.
+- Git tags/releases are optional and are **not** a recognition marker; some
+  working plugins ship without any tag. Tags are still useful for pinned
+  installs: `github:weymann/dsh-java-mcp#v0.1.0`.
+
+Maintainer commands (optional; only when a release should be published):
+
+```powershell
+gh repo edit weymann/dsh-java-mcp --add-topic dsh-plugin --add-topic deepseek-harness --add-topic mcp --add-topic java
+git tag -a v0.1.0 -m "dsh-java-mcp 0.1.0"
+git push origin v0.1.0
+```
+
 ## Troubleshooting
 
 | Symptom | Likely cause | Fix |
@@ -276,6 +310,8 @@ Checking the configuration:
 package.json          bundle manifest (dsh.bundle.patch, peer on dsh-mcp-client)
 cordis.patch.yml      patch layer: inserts the mcp-client row
 index.js              empty ESM module (bundle convention)
+icon.svg              plugin icon shown in the Plugins page
+locale/en.json        display title and description for the Plugins page
 test/plugin.test.mjs  smoke tests for manifest, patch and docs
 docs/javalens-tools-1.5.3.txt  canonical JavaLens 1.5.3 tool surface
 docs/decisions/       decision records

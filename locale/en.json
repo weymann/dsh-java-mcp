@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "JavaLens MCP",
+    "description": "Compiler-accurate Java analysis through the JavaLens MCP server (Eclipse JDT): 75 tools for navigation, diagnostics, refactoring, impact and flow analysis."
+  }
+}

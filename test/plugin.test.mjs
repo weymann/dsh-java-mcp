@@ -29,6 +29,24 @@ test('manifest declares the MCP client peer used by the inserted row', () => {
   assert.equal(manifest.peerDependencies['@deepseek-ai/dsh-mcp-client'], '*')
 })
 
+test('manifest ships the display metadata and discovery keyword', () => {
+  assert.equal(manifest.icon, './icon.svg')
+  assert.ok(manifest.files.includes('icon.svg'))
+  assert.ok(manifest.files.includes('locale/*.json'))
+  assert.ok(manifest.keywords.includes('dsh-plugin'))
+  assert.ok(manifest.keywords.includes('deepseek-harness'))
+})
+
+test('display metadata files are valid', () => {
+  const icon = read('icon.svg')
+  assert.match(icon, /^<svg[\s>]/)
+  assert.match(icon, /aria-label="JavaLens MCP"/)
+  const locale = JSON.parse(read('locale/en.json'))
+  assert.equal(typeof locale.meta?.title, 'string')
+  assert.equal(typeof locale.meta?.description, 'string')
+  assert.ok(locale.meta.title.length > 0 && locale.meta.description.length > 0)
+})
+
 test('index.js is an importable ESM no-op', async () => {
   const namespace = await import(pathToFileURL(join(root, 'index.js')).href)
   assert.deepEqual(Object.keys(namespace), [])
@@ -91,6 +109,14 @@ test('documentation covers requirements, install and project loading', () => {
   assert.match(readme, /harness\.log/) // Desktop runtime log path
 })
 
+test('documentation explains recognition and display metadata', () => {
+  assert.match(readme, /How DSH recognises and displays the plugin/)
+  assert.match(readme, /no git-tag convention/i)
+  assert.match(readme, /dsh\.bundle\.patch/)
+  assert.match(readme, /icon\.svg/)
+  assert.match(readme, /locale\/en\.json/)
+})
+
 test('decision records cover the bundle approach and the workspace correction', () => {
   const record = read('docs/decisions/0001-bundle-patch-mcp-javalens.md')
   assert.match(record, /^# 0001/m)
@@ -100,4 +126,7 @@ test('decision records cover the bundle approach and the workspace correction', 
   assert.match(followUp, /^# 0002/m)
   assert.match(followUp, /load_project/)
   assert.match(followUp, /profile directory/)
+  const metadata = read('docs/decisions/0003-plugin-metadata.md')
+  assert.match(metadata, /^# 0003/m)
+  assert.match(metadata, /git tags/i)
 })
