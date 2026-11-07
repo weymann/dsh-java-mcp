@@ -130,6 +130,16 @@ test('documentation explains recognition and display metadata', () => {
   assert.match(readme, /locale\/<lang>\.json/)
 })
 
+test('language switchers sit directly under the title in both READMEs', () => {
+  for (const file of ['README.md', 'README.zh.md']) {
+    assert.match(
+      read(file),
+      /^# dsh-java-mcp\n\n(?:English \| \[中文\]\(README\.zh\.md\)|\[English\]\(README\.md\) \| 中文)\n\n/,
+      `${file}: switcher must follow the title, before the description`,
+    )
+  }
+})
+
 test('documentation provides verified usage prompts', () => {
   const promptTools = ['diagnose_and_fix', 'find_unused_code', 'rename_symbol', 'analyze_change_impact']
   assert.match(readme, /## How\?/)

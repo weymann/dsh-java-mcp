@@ -1,11 +1,11 @@
 # dsh-java-mcp
 
+[English](README.md) | 中文
+
 一个 DeepSeek Harness **bundle（插件包）**，自动把 [JavaLens](https://github.com/pzalutski-pixel/javalens-mcp)
 MCP 服务器接入 DSH。JavaLens 基于 Eclipse JDT，安装后模型可直接使用
 `mcp__javalens__*` 命名空间下的 **75 个 Java 分析工具**：符号搜索、引用查找、
 类型层次、诊断、调用层次、变更影响、数据/控制流分析，以及返回文本编辑的重构操作。
-
-[English](README.md) | 中文
 
 ## 为什么需要它？
 
