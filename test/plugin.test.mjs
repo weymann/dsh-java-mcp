@@ -44,9 +44,13 @@ test('patch inserts exactly one JavaLens MCP client row', () => {
   assert.match(patch, /command: npx/)
 })
 
-test('patch pins JavaLens and derives the project path from cwd', () => {
+test('patch pins JavaLens and leaves project selection to load_project', () => {
   assert.match(patch, /javalens-mcp@1\.5\.3/)
-  assert.match(patch, /JAVA_PROJECT_PATH: !!js process\.env\.JAVA_PROJECT_PATH \|\| process\.cwd\(\)/)
+  // DSH does not expose the session workspace at boot (the Desktop harness
+  // runs from its profile directory), so the row must not bind JAVA_PROJECT_PATH
+  // to process.cwd(); an environment-provided value is inherited instead.
+  assert.doesNotMatch(patch, /JAVA_PROJECT_PATH: !!js process\.env\.JAVA_PROJECT_PATH \|\| process\.cwd\(\)/)
+  assert.doesNotMatch(patch, /^\s*env:\s*$/m)
   assert.match(patch, /toolCallTimeoutMs: 120000/)
   assert.match(patch, /failOnStartupError: false/)
 })
@@ -76,17 +80,24 @@ test('pinned JavaLens version is consistent across patch and README', () => {
   assert.equal(readmePin, patchPin)
 })
 
-test('documentation covers requirements, install and overrides', () => {
+test('documentation covers requirements, install and project loading', () => {
   assert.match(readme, /Java[^\n]{0,40}21/)
   assert.match(readme, /Plugins/) // Desktop installs through the app-owned plugin page
   assert.match(readme, /Enable now|switch the bundle/) // install does not enable the layer
   assert.match(readme, /plugin --profile web add github:weymann\/dsh-java-mcp/)
-  assert.match(readme, /JAVA_PROJECT_PATH/)
+  assert.match(readme, /JAVA_PROJECT_PATH/) // optional auto-load override
+  assert.match(readme, /load_project/) // per-session project loading
+  assert.match(readme, /profile directory/) // why no cwd-based auto-load
   assert.match(readme, /harness\.log/) // Desktop runtime log path
 })
 
-test('decision record for the bundle approach exists', () => {
+test('decision records cover the bundle approach and the workspace correction', () => {
   const record = read('docs/decisions/0001-bundle-patch-mcp-javalens.md')
   assert.match(record, /^# 0001/m)
   assert.match(record, /dsh\.bundle\.patch/)
+  assert.match(record, /superseded by \[0002\]/)
+  const followUp = read('docs/decisions/0002-load-project-per-session.md')
+  assert.match(followUp, /^# 0002/m)
+  assert.match(followUp, /load_project/)
+  assert.match(followUp, /profile directory/)
 })

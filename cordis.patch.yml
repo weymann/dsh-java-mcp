@@ -17,12 +17,13 @@
         # npx.cmd through PATHEXT on Windows and npx on POSIX.
         command: npx
         args: ['-y', 'javalens-mcp@1.5.3']
-        env:
-          # `!!js` is DSH's entry-list YAML dialect: evaluated once at boot.
-          # The Desktop app boots the harness with cwd = opened workspace, so
-          # this defaults to the project root the session works in. Set
-          # JAVA_PROJECT_PATH to override explicitly (e.g. multi-repo folder).
-          JAVA_PROJECT_PATH: !!js process.env.JAVA_PROJECT_PATH || process.cwd()
+        # Deliberately no JAVA_PROJECT_PATH here: DSH does not expose the opened
+        # session workspace to boot-time configuration (the Desktop app runs the
+        # harness from its profile directory, not from the workspace). JavaLens
+        # therefore starts without a project; the model loads the workspace once
+        # per session with mcp__javalens__load_project. A JAVA_PROJECT_PATH set
+        # in the environment is inherited by the server process and auto-loads
+        # that fixed project instead.
         # JavaLens answers only after its JDT project load; large multi-module
         # builds can exceed the 60 s default of the MCP client.
         toolCallTimeoutMs: 120000

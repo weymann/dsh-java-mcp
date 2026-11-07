@@ -72,8 +72,10 @@ npx --yes @deepseek-ai/dsh@0.2.1-rc.3 plugin --profile web add github:weymann/ds
 npx --yes @deepseek-ai/dsh@0.2.1-rc.3 web
 ```
 
-Important: start from the Java project directory — `JAVA_PROJECT_PATH` is
-derived from `process.cwd()`.
+After DSH starts, load the Java project once per session through the model:
+`mcp__javalens__load_project` with the absolute workspace path. The model sees
+the workspace path in its session context, so a prompt like "load the Java
+project in this workspace and list unused methods" is enough.
 
 ### Local development / installing from the checkout
 
@@ -92,17 +94,32 @@ Bundle defaults:
 |---|---|---|
 | `serverName` | `javalens` | Tool prefix: `mcp__javalens__*` |
 | `command` / `args` | `npx -y javalens-mcp@1.5.3` | Server launch, version pinned for reproducible results |
-| `env.JAVA_PROJECT_PATH` | `process.env.JAVA_PROJECT_PATH \|\| process.cwd()` | Project to analyse; in the Desktop app `cwd` is the opened workspace |
+| `env` | none | Optional; set `JAVA_PROJECT_PATH` to auto-load a fixed project (see below) |
 | `toolCallTimeoutMs` | `120000` | Timeout per tool call (JDT project load can take a while) |
 | `failOnStartupError` | `false` | DSH still starts without Java/npx; the tools are then missing and an error is logged |
 
-### Setting the project path explicitly
+### Loading a project
 
-If the workspace root is not a Java project (e.g. a folder containing several
-repositories), override the path in the profile's own patch layer. For the
-Desktop app that is
-`%APPDATA%\dsh-desktop\harness\profiles\desktop\cordis.patch.yml`; for CLI
-profiles it is `$DSH_HOME/profiles/<profile>/cordis.patch.yml`. An `id`-based
+DSH does not expose the opened workspace to boot-time configuration: the
+Desktop app starts the harness from its profile directory, while the workspace
+is a per-session property and the MCP client row is configured once when the
+harness boots. JavaLens therefore starts without a project, and the model loads
+the workspace once per session:
+
+> "Load the Java project in this workspace with
+> `mcp__javalens__load_project` and then find unused methods."
+
+The model knows the workspace path from its session context. `health_check`
+reports `project.loaded: false` before that call and `true` afterwards; every
+analysis tool requires the load.
+
+#### Fixed project via environment (optional)
+
+To auto-load one fixed project instead, set `JAVA_PROJECT_PATH` in the
+environment of the DSH process — the variable is inherited by the MCP server —
+and restart DSH. Alternatively add it through the profile's patch layer
+(Desktop: `%APPDATA%\dsh-desktop\harness\profiles\desktop\cordis.patch.yml`;
+CLI profiles: `$DSH_HOME/profiles/<profile>/cordis.patch.yml`). An `id`-based
 override replaces the whole config, so repeat every field:
 
 ```yaml
@@ -120,8 +137,8 @@ override replaces the whole config, so repeat every field:
     failOnStartupError: false
 ```
 
-Alternatively, the model can call `mcp__javalens__load_project` with an
-absolute path when the automatically loaded path is not the right one.
+The environment variable is the simpler route for a single main project; the
+patch layer keeps the path with the profile.
 
 ### Other knobs
 
@@ -151,8 +168,6 @@ the row in the profile's patch layer, keeping every field:
     transport: stdio
     command: pnpm
     args: ['dlx', 'javalens-mcp@1.5.3']
-    env:
-      JAVA_PROJECT_PATH: C:\path\to\my-java-project
     toolCallTimeoutMs: 120000
     failOnStartupError: false
 ```
@@ -203,9 +218,11 @@ suite checks the README against it.
 - The MCP handshake itself takes a few seconds; loading a small project took
   about 10 s in testing. Large multi-module builds take longer — that is why
   `toolCallTimeoutMs` is set to 120 s.
-- `JAVA_PROJECT_PATH` is loaded automatically at startup (default: workspace
-  root). If the workspace is not a Java project, the auto-load fails; the model
-  can then call `load_project` with an absolute path.
+- No project is auto-loaded by default: the Desktop app boots the harness from
+  its profile directory, and the session workspace is not available to the
+  boot-time MCP configuration. The model calls `load_project` once per session
+  with the workspace path. To auto-load a fixed project instead, set
+  `JAVA_PROJECT_PATH` in the environment (see [Loading a project](#loading-a-project)).
 
 ## How it works
 
@@ -215,9 +232,9 @@ DSH profile (package.json)
   │    …
   │    └─ dsh-java-mcp ── dsh.bundle.patch → cordis.patch.yml
   │                              └─ insert: @deepseek-ai/dsh-mcp-client (serverName javalens)
-  └─ boot: !!js expressions are evaluated, the MCP row starts
-       └─ stdio: npx -y javalens-mcp@1.5.3  (JAVA_PROJECT_PATH = process.cwd())
-            └─ 75 JDT tools as mcp__javalens__*
+  └─ boot: the MCP row starts the server
+       └─ stdio: npx -y javalens-mcp@1.5.3   → 75 JDT tools as mcp__javalens__*
+            └─ model calls mcp__javalens__load_project(workspace) once per session
 ```
 
 This plugin is a pure configuration bundle: `index.js` is an empty ESM module
@@ -232,7 +249,9 @@ initial `npx` download; project code and analysis results stay local.
 | No `mcp__javalens__*` tools | Java < 21, `npx` not on PATH, or the first download failed | Check `java -version`; run `npx -y javalens-mcp@1.5.3` manually; check the DSH log for MCP errors; restart DSH |
 | `npx` is not found (Desktop-only machine) | The Desktop app bundles Node and pnpm but no npm/npx | Install Node.js LTS or use the `pnpm dlx` launcher variant (see [Launcher alternatives](#launcher-alternatives-no-npx)) |
 | Log says "Java not found" even though Java is installed | The DSH process (especially the GUI app) cannot see `java` in PATH and has no `JAVA_HOME` | Add the Java directory to the system PATH or set `JAVA_HOME`; restart the app. The JavaLens launcher checks `java -version` first, then `%JAVA_HOME%\bin\java.exe` |
-| Wrong project analysed | The workspace root is not the Java project | Set `JAVA_PROJECT_PATH` (see above) or call `load_project` with an absolute path |
+| Wrong project analysed | The project was loaded from a different path | Call `load_project` with the correct absolute workspace path; for a fixed project set `JAVA_PROJECT_PATH` (see [Loading a project](#loading-a-project)) |
+| `health_check` shows `project.loaded: false` (root = profile directory) | Expected default: no project is auto-loaded | Ask the model to call `load_project` with the workspace path, or set `JAVA_PROJECT_PATH` |
+| Analysis tool answers "Requires load_project to be called first" | Project not loaded in this session | Call `load_project` once with the absolute project path |
 | Tool call times out | large multi-module build, cold JDT index | Increase `toolCallTimeoutMs`; load the project once to warm it up |
 | `dsh plugin --profile desktop …` fails | The Desktop profile is owned by the app | Use the Desktop app's Plugins page (see Installation) |
 | GitHub installation fails | Repository not pushed, `git` missing, or network/proxy blocked | Push the repository; check `git --version`; alternatively install from a local path |
@@ -244,8 +263,7 @@ initial `npx` download; project code and analysis results stay local.
 Checking the configuration:
 
 - **CLI profile:** `dsh --profile web --dump-config` shows the composed patch
-  layers including the `mcp-javalens` row; `!!js` expressions appear there
-  unevaluated.
+  layers including the `mcp-javalens` row.
 - **Desktop:** The Plugins page lists the bundle and its rows. The recorded
   bundle list is in
   `%APPDATA%\dsh-desktop\harness\profiles\desktop\package.json`; harness and

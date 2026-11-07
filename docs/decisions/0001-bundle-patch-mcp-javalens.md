@@ -1,7 +1,9 @@
 # 0001 – Bundle patch instead of a runtime plugin for the JavaLens MCP integration
 
 - Date: 2026-11-07
-- Status: accepted
+- Status: superseded by [0002](0002-load-project-per-session.md) for the
+  workspace/`JAVA_PROJECT_PATH` decision; the bundle, install and runtime
+  decisions below remain valid.
 - Context: original discussion "Can I improve Java code analysis by giving the
   LLM a Java MCP server?"
 
