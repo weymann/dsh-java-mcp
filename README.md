@@ -18,6 +18,47 @@ overloads. This plugin implements the idea from the original discussion: give
 the LLM a Java MCP server so code analysis becomes compiler-accurate instead of
 textual.
 
+## How?
+
+There is no special syntax: install and enable the bundle, then describe the
+outcome you want in natural language. JavaLens starts without a project in each
+session; the model loads the workspace once (`load_project`) and then works
+through the 75 tools. Four proven starting points:
+
+### 1. Fix the diagnostics in one go
+
+> "Load the Java project in this workspace with JavaLens, then fix every
+> fixable diagnostic: use `diagnose_and_fix`, apply the returned text edits to
+> the source files, and re-run `get_diagnostics` until it is clean."
+
+The model runs `get_diagnostics`, `diagnose_and_fix` (or `get_quick_fixes` plus
+`apply_quick_fix`) and applies the edits with its file-editing tool. JavaLens
+never writes files itself, so every change stays visible and reviewable.
+
+### 2. Remove dead code
+
+> "Find unused methods and fields with `find_unused_code`, remove the ones that
+> are clearly dead, and list what you deleted and where."
+
+### 3. Rename safely across the project
+
+> "Rename `Service.describeAll` to `summarizeAll` using `rename_symbol`, apply
+> the edits in all affected files, and verify with `get_diagnostics` that
+> nothing broke."
+
+The rename returns one edit per occurrence — declaration plus every call site —
+so the model can apply them all in one step.
+
+### 4. Check the blast radius before changing code
+
+> "I want to change the signature of `Service.describeAll`. Before touching
+> anything, use `analyze_change_impact` and the call hierarchy to list every
+> affected file and call site, then summarize the risk. If the project has
+> tests, also name the tests that would need to run."
+
+This is where JDT beats `grep`: the analysis follows overrides, interface calls
+and transitive callers instead of matching text.
+
 ## Requirements
 
 | Requirement | Details |

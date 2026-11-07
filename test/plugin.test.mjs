@@ -130,6 +130,17 @@ test('documentation explains recognition and display metadata', () => {
   assert.match(readme, /locale\/<lang>\.json/)
 })
 
+test('documentation provides verified usage prompts', () => {
+  const promptTools = ['diagnose_and_fix', 'find_unused_code', 'rename_symbol', 'analyze_change_impact']
+  assert.match(readme, /## How\?/)
+  const chinese = read('README.zh.md')
+  assert.match(chinese, /## 怎么做/)
+  for (const tool of promptTools) {
+    assert.ok(readme.includes(tool), `${tool} missing from the English How? section`)
+    assert.ok(chinese.includes(tool), `${tool} missing from the Chinese How? section`)
+  }
+})
+
 test('decision records cover the bundle approach and the workspace correction', () => {
   const record = read('docs/decisions/0001-bundle-patch-mcp-javalens.md')
   assert.match(record, /^# 0001/m)
